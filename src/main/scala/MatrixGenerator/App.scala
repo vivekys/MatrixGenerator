@@ -10,6 +10,7 @@ import org.apache.hadoop.hive.ql.io.orc.MatrixDump
 object App {
   def main(args : Array[String]) {
     val conf = new Configuration()
+    println(conf.get("orcfiledump"))
     if (conf.get("orcfiledump") == "dump") {
       MatrixDump.dump(args)
     }
