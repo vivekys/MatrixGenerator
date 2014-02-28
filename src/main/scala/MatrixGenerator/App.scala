@@ -9,7 +9,7 @@ import org.apache.hadoop.hive.ql.io.orc.MatrixDump
  */
 object App {
   def main(args : Array[String]) {
-    println(args(args.length))
+    println(args)
     if (args(0) == "orcfiledump") {
       MatrixDump.dump(args)
     }
