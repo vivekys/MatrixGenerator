@@ -52,12 +52,9 @@ object Generator extends Configured with Tool {
 
 
     override def map(key : LongWritable, value : NullWritable, context : Context) {
-      val rowId = key.get()
-      val bitsToShiftLeft = Math.ceil(Math.log(numRows)).asInstanceOf[Int]
       val data = new util.ArrayList[Long](numCols.asInstanceOf[Int])
       for (i <- 0 until numCols) {
-//        val d = rand.nextLong().<<(bitsToShiftLeft) + rowId
-        val d = (rowId.toString + i.toString).toLong
+        val d = rand.nextLong()
         data.add(d)
       }
       val row = serde.serialize(data, oip)
