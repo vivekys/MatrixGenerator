@@ -101,7 +101,7 @@ class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
     val totalRows = Generator.getNumRows(job)
     val numSplits = 120
     val splits = new util.ArrayList[InputSplit]()
-    val splitList = 1 to totalRows by numSplits
+    val splitList = 1L to totalRows by numSplits
     for (split <- splitList) {
       val endRow = if (split + numSplits < totalRows)
                       split + numSplits
