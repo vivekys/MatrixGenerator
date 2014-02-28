@@ -56,8 +56,8 @@ object Generator extends Configured with Tool {
       val bitsToShiftLeft = Math.ceil(Math.log(numRows)).asInstanceOf[Int]
       val data = new util.ArrayList[Long](numCols.asInstanceOf[Int])
       for (i <- 0 until numCols) {
-        val d = rand.nextLong().<<(bitsToShiftLeft) + rowId
-        System.out.println("Generating row : " + d + " for rowID : " + rowId)
+//        val d = rand.nextLong().<<(bitsToShiftLeft) + rowId
+        val d = (rowId.toString + i.toString).toLong
         data.add(d)
       }
       val row = serde.serialize(data, oip)
