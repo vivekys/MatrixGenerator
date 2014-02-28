@@ -66,6 +66,8 @@ object Generator extends Configured with Tool {
 
   //Initalize the MapReduce
   def run(args: Array[String]): Int = {
+    val conf = getConf
+    conf.set("mapred.job.map.memory.mb", "6144")
     val job = new Job(getConf, "RandomMatrix Generator")
     if (args.length != 3) {
       usage
@@ -86,6 +88,7 @@ object Generator extends Configured with Tool {
     job.setOutputKeyClass(classOf[NullWritable])
     job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
+
     return if (job.waitForCompletion(true)) 0 else 1
   }
 
@@ -96,7 +99,7 @@ object Generator extends Configured with Tool {
 class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
   override def getSplits(job: JobContext): util.List[InputSplit] = {
     val totalRows = Generator.getNumRows(job)
-    val numSplits = job.getConfiguration.asInstanceOf[JobConf].getNumMapTasks;
+    val numSplits = 120
     val splits = new util.ArrayList[InputSplit]()
     var currentRow = 0L
     for (split <- 0 until numSplits) {
