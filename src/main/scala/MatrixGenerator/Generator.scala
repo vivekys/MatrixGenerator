@@ -118,15 +118,20 @@ class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
 /**
  * An input split consisting of a range on numbers.
  */
-class RangeInputSplit(var firstRow : Long = 0, var rowCount : Long = 0) extends InputSplit with Writable {
+class RangeInputSplit(firstRow : Long = 0, rowCount : Long = 0) extends InputSplit with Writable {
+  var firstRow_ = firstRow
+  var rowCount_ = rowCount
+
+  def this () {this(0, 0)}
+
   override def readFields(in: DataInput) = {
-    firstRow = WritableUtils.readVLong(in);
-    rowCount = WritableUtils.readVLong(in);
+    firstRow_ = WritableUtils.readVLong(in);
+    rowCount_ = WritableUtils.readVLong(in);
   }
 
   override def write(out: DataOutput) {
-    WritableUtils.writeVLong(out, firstRow);
-    WritableUtils.writeVLong(out, rowCount);
+    WritableUtils.writeVLong(out, firstRow_);
+    WritableUtils.writeVLong(out, rowCount_);
   }
 
   override def getLength: Long = 0
