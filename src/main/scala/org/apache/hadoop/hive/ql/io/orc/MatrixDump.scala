@@ -33,8 +33,8 @@ object MatrixDump {
       val soi = reader.getObjectInspector.asInstanceOf[OrcStructInspector]
       val sb = new StringBuilder
 
-      var row : OrcStruct = rows.next(null).asInstanceOf[OrcStruct]
       while (rows.hasNext) {
+        var row : OrcStruct = rows.next(null).asInstanceOf[OrcStruct]
         val fields = soi.getAllStructFieldRefs
         for (i <- 0 until fields.size) {
           if (i > 0) {
@@ -44,7 +44,6 @@ object MatrixDump {
 //          sb.append(fields.get(i).getFieldObjectInspector().asInstanceOf[WritableLongObjectInspector].get(row));
         }
         sb.append("\n")
-        row = rows.next(row).asInstanceOf[OrcStruct]
       }
       println(sb)
       rows.close();
