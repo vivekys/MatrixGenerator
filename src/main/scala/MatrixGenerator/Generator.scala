@@ -12,6 +12,7 @@ import org.apache.hadoop.hive.ql.io.orc.{OrcNewOutputFormat, OrcSerde}
 import scala.util.Random
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 
 /**
  * Created with IntelliJ IDEA.
@@ -80,6 +81,7 @@ object Generator extends Configured with Tool {
     if (outputDir.getFileSystem(getConf).exists(outputDir)) {
       throw new IOException("Output dir " + outputDir + " already exists")
     }
+    FileOutputFormat.setOutputPath(job, outputDir)
     job.setOutputFormatClass(classOf[OrcNewOutputFormat])
     job.setJarByClass(this.getClass)
     job.setMapperClass(classOf[GenMapper])
