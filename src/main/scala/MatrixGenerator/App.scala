@@ -9,7 +9,8 @@ import org.apache.hadoop.hive.ql.io.orc.MatrixDump
  */
 object App {
   def main(args : Array[String]) {
-    if (System.getProperties.containsKey("orcfiledump")) {
+    val conf = new Configuration()
+    if (conf.get("orcfiledump") == "dump") {
       MatrixDump.dump(args)
     }
     else {
