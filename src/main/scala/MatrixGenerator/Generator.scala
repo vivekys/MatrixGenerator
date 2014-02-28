@@ -68,7 +68,7 @@ object Generator extends Configured with Tool {
   def run(args: Array[String]): Int = {
     val conf = getConf
     conf.set("mapred.job.map.memory.mb", "6144")
-    val job = new Job(getConf, "RandomMatrix Generator")
+    val job = new Job(conf, "RandomMatrix Generator")
     if (args.length != 3) {
       usage
       return 2
@@ -101,11 +101,13 @@ class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
     val totalRows = Generator.getNumRows(job)
     val numSplits = 120
     val splits = new util.ArrayList[InputSplit]()
-    var currentRow = 0L
-    for (split <- 0 until numSplits) {
-      val goal = Math.ceil(totalRows * (split + 1).asInstanceOf[Double] / numSplits).asInstanceOf[Long]
-      splits.add(new RangeInputSplit(currentRow, goal - currentRow))
-      currentRow = goal
+    val splitList = 1 to totalRows by numSplits
+    for (split <- splitList) {
+      val endRow = if (split + numSplits < totalRows)
+                      split + numSplits
+                   else
+                      totalRows
+      splits.add(new RangeInputSplit(split, endRow))
     }
     splits
   }
