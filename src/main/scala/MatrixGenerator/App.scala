@@ -9,9 +9,8 @@ import org.apache.hadoop.hive.ql.io.orc.MatrixDump
  */
 object App {
   def main(args : Array[String]) {
-    println(args)
     if (args(0) == "orcfiledump") {
-      MatrixDump.dump(args)
+      MatrixDump.dump(args.dropRight(1))
     }
     else {
       val result = ToolRunner.run(new Configuration(), Generator, args)
