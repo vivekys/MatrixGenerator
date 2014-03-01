@@ -24,7 +24,6 @@ object Generator extends Configured with Tool {
   private val NUM_ROWS = "mapreduce.matrixgenerator.num-rows"
   private val NUM_COLS = "mapreduce.matrixgenerator.num-cols"
   private val NUM_COLF = "mapreduce.matrixgenerator.num-colF"
-  private val BASE_OUTPUT_NAME = "mapreduce.output.basename"
 
   def setNumRows(job : Job, rows : Int) {
     job.getConfiguration.setInt(NUM_ROWS, rows)
@@ -49,7 +48,7 @@ object Generator extends Configured with Tool {
     var numColF : Int = 0
     var numRows : Int = 0
     var numCols : Int = 0
-    var output : MultipleOutputs[Object, Writable] = null
+    var output : MultipleOutputs[NullWritable, Writable] = null
     type Context = Mapper[IntWritable, NullWritable, NullWritable, Writable]#Context
 
     override def setup(context : Context) {
@@ -57,7 +56,7 @@ object Generator extends Configured with Tool {
       numCols = Generator.getNumCols(context) / numColF
       numRows = Generator.getNumRows(context)
       oip = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(SchemaGenerator.schemaGen(numCols))
-      output = new MultipleOutputs[Object, Writable](context)
+      output = new MultipleOutputs[NullWritable, Writable](context)
     }
 
 
