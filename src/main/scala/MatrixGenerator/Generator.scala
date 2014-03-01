@@ -6,13 +6,12 @@ import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.io._
 import java.util
 import java.io.{IOException, DataOutput, DataInput}
-import org.apache.hadoop.mapred.{JobConf}
 import org.apache.hadoop.hive.serde2.typeinfo.{TypeInfoUtils, TypeInfo, TypeInfoFactory}
 import org.apache.hadoop.hive.ql.io.orc.{OrcNewOutputFormat, OrcSerde}
 import scala.util.Random
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import org.apache.hadoop.mapreduce.lib.output.{MultipleOutputs, FileOutputFormat}
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,58 +23,71 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 object Generator extends Configured with Tool {
   private val NUM_ROWS = "mapreduce.matrixgenerator.num-rows"
   private val NUM_COLS = "mapreduce.matrixgenerator.num-cols"
+  private val NUM_COLF = "mapreduce.matrixgenerator.num-colF"
 
-  def setNumRows(job : Job, rows : Long) {
-    job.getConfiguration.setLong(NUM_ROWS, rows)
+  def setNumRows(job : Job, rows : Int) {
+    job.getConfiguration.setInt(NUM_ROWS, rows)
   }
 
-  def setNumCols(job : Job, cols : Long) {
-    job.getConfiguration.setLong(NUM_COLS, cols)
+  def setNumCols(job : Job, cols : Int) {
+    job.getConfiguration.setInt(NUM_COLS, cols)
   }
 
-  def getNumRows(job : JobContext) = job.getConfiguration.getLong(NUM_ROWS, 10)
-  def getNumCols(job : JobContext) = job.getConfiguration.getLong(NUM_COLS, 10)
+  def setNumColF(job : Job, colF : Int) {
+    job.getConfiguration.setInt(NUM_COLF, colF)
+  }
 
-  class GenMapper extends Mapper[LongWritable, NullWritable, Object, Writable] {
+  def getNumRows(job : JobContext) = job.getConfiguration.getInt(NUM_ROWS, 10)
+  def getNumCols(job : JobContext) = job.getConfiguration.getInt(NUM_COLS, 10)
+  def getNumColF(job : JobContext) = job.getConfiguration.getInt(NUM_COLF, 10)
+
+  class GenMapper extends Mapper[IntWritable, NullWritable, Object, Writable] {
     val serde = new OrcSerde()
     val rand = new Random()
     var oip : ObjectInspector = null
-    var numCols : Int = 0
+    var numColF : Int = 0
     var numRows : Int = 0
-    type Context = Mapper[LongWritable, NullWritable, Object, Writable]#Context
+    var numCols : Int = 0
+    var output : MultipleOutputs[Object, Writable] = null
+    type Context = Mapper[IntWritable, NullWritable, Object, Writable]#Context
 
     override def setup(context : Context) {
-      numCols = Generator.getNumCols(context).asInstanceOf[Int]
-      numRows = Generator.getNumRows(context).asInstanceOf[Int]
+      numColF = Generator.getNumColF(context)
+      numCols = Generator.getNumCols(context) / numColF
+      numRows = Generator.getNumRows(context)
       oip = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(SchemaGenerator.schemaGen(numCols))
+      output = new MultipleOutputs[Object, Writable](context)
     }
 
 
-    override def map(key : LongWritable, value : NullWritable, context : Context) {
-      val data = new util.ArrayList[String](numCols.asInstanceOf[Int])
-      for (i <- 0 until numCols) {
-        val d = rand.nextLong()
-        data.add(d.toString)
+    override def map(key : IntWritable, value : NullWritable, context : Context) {
+      for (i <- 1 to numColF) {
+        val data = new util.ArrayList[String](numCols)
+        for (j <- 1 to numCols) {
+          val d = rand.nextInt()
+          data.add(d.toString)
+        }
+        val row = serde.serialize(data, oip)
+        output.write("cf-"+i, null, row)
       }
-      val row = serde.serialize(data, oip)
-      context.write(null, row)
     }
   }
 
-  def usage = println("matrixGen <num rows> <num cols> <output dir>")
+  def usage = println("matrixGen <num rows> <num cols> <num colf> <output dir>")
 
   //Initalize the MapReduce
   def run(args: Array[String]): Int = {
     val conf = getConf
     conf.set("mapred.job.map.memory.mb", "6144")
     val job = new Job(conf, "RandomMatrix Generator")
-    if (args.length != 3) {
+    if (args.length != 4) {
       usage
       return 2
     }
-    setNumRows(job, args(0).toLong)
-    setNumCols(job, args(1).toLong)
-    val outputDir = new Path(args(2))
+    setNumRows(job, args(0).toInt)
+    setNumCols(job, args(1).toInt)
+    setNumColF(job, args(2).toInt)
+    val outputDir = new Path(args(3))
 
     if (outputDir.getFileSystem(getConf).exists(outputDir)) {
       throw new IOException("Output dir " + outputDir + " already exists")
@@ -88,20 +100,23 @@ object Generator extends Configured with Tool {
     job.setOutputKeyClass(classOf[NullWritable])
     job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
+    for (i <- 1 to Generator.getNumColF(job)) {
+      MultipleOutputs.addNamedOutput(job, "cf-"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
+    }
 
     return if (job.waitForCompletion(true)) 0 else 1
   }
 
 }
 /**
- * An input format that assigns ranges of longs to each mapper.
+ * An input format that assigns ranges of Ints to each mapper.
  */
-class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
+class RangeInputFormat extends InputFormat[IntWritable, NullWritable] {
   override def getSplits(job: JobContext): util.List[InputSplit] = {
     val totalRows = Generator.getNumRows(job)
     val numSplits = 120
     val splits = new util.ArrayList[InputSplit]()
-    val splitList = 1L to totalRows by numSplits
+    val splitList = 1 to totalRows by numSplits
     for (split <- splitList) {
       val endRow = if (split + numSplits < totalRows)
                       split + numSplits
@@ -112,7 +127,7 @@ class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
     splits
   }
 
-  override def createRecordReader(split: InputSplit, context: TaskAttemptContext): RecordReader[LongWritable, NullWritable] = {
+  override def createRecordReader(split: InputSplit, context: TaskAttemptContext): RecordReader[IntWritable, NullWritable] = {
     new RangeRecordReader
   }
 }
@@ -120,18 +135,18 @@ class RangeInputFormat extends InputFormat[LongWritable, NullWritable] {
 /**
  * An input split consisting of a range on numbers.
  */
-class RangeInputSplit(var firstRow : Long = 0, var rowCount : Long = 0) extends InputSplit with Writable {
+class RangeInputSplit(var firstRow : Int = 0, var rowCount : Int = 0) extends InputSplit with Writable {
 
   def this () {this(0, 0)}
 
   override def readFields(in: DataInput) = {
-    firstRow = WritableUtils.readVLong(in);
-    rowCount = WritableUtils.readVLong(in);
+    firstRow = WritableUtils.readVInt(in);
+    rowCount = WritableUtils.readVInt(in);
   }
 
   override def write(out: DataOutput) {
-    WritableUtils.writeVLong(out, firstRow);
-    WritableUtils.writeVLong(out, rowCount);
+    WritableUtils.writeVInt(out, firstRow);
+    WritableUtils.writeVInt(out, rowCount);
   }
 
   override def getLength: Long = 0
@@ -142,11 +157,11 @@ class RangeInputSplit(var firstRow : Long = 0, var rowCount : Long = 0) extends 
 /**
  * A record reader that will generate a range of numbers.
  */
-class RangeRecordReader extends RecordReader[LongWritable, NullWritable] {
-  var startRow = 0L
-  var finishedRows = 0L
-  var totalRows = 0L
-  var key : LongWritable = null
+class RangeRecordReader extends RecordReader[IntWritable, NullWritable] {
+  var startRow = 0
+  var finishedRows = 0
+  var totalRows = 0
+  var key : IntWritable = null
 
   override def close() {
   //Nothing to close
@@ -159,7 +174,7 @@ class RangeRecordReader extends RecordReader[LongWritable, NullWritable] {
 
   override def nextKeyValue(): Boolean = {
     if (key == null) {
-      key = new LongWritable()
+      key = new IntWritable()
     }
 
     if (finishedRows < totalRows) {
@@ -170,7 +185,7 @@ class RangeRecordReader extends RecordReader[LongWritable, NullWritable] {
       false
   }
 
-  override def getCurrentKey: LongWritable = key
+  override def getCurrentKey: IntWritable = key
 
   override def getCurrentValue: NullWritable = NullWritable.get()
 
@@ -181,8 +196,8 @@ object SchemaGenerator {
   def schemaGen (numCols : Int) : TypeInfo = {
     val colNames = new util.ArrayList[String](numCols)
     val colTypes = new util.ArrayList[TypeInfo](numCols)
-    val intType = TypeInfoFactory.getPrimitiveTypeInfoFromJavaPrimitive(classOf[String])
-    val prefix = "col-"
+    val intType = TypeInfoFactory.getPrimitiveTypeInfoFromJavaPrimitive(classOf[Integer])
+    val prefix = "c-"
     for (i <- 1 to numCols) {
       val colName = prefix + i
       colNames.add(colName)
