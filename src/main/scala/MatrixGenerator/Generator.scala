@@ -11,7 +11,7 @@ import org.apache.hadoop.hive.ql.io.orc.{OrcNewOutputFormat, OrcSerde}
 import scala.util.Random
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.lib.output.{MultipleOutputs, FileOutputFormat}
+import org.apache.hadoop.mapreduce.lib.output.{LazyOutputFormat, MultipleOutputs, FileOutputFormat}
 
 /**
  * Created with IntelliJ IDEA.
@@ -104,10 +104,11 @@ object Generator extends Configured with Tool {
     job.setOutputKeyClass(classOf[NullWritable])
     job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
+
     for (i <- 1 to Generator.getNumColF(job)) {
       MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
     }
-
+    LazyOutputFormat.setOutputFormatClass(job, classOf[OrcNewOutputFormat])
     return if (job.waitForCompletion(true)) 0 else 1
   }
 
