@@ -71,6 +71,10 @@ object Generator extends Configured with Tool {
         output.write("cf"+i, NullWritable.get(), row)
       }
     }
+
+    override def cleanup(context : Context) {
+      output.close()
+    }
   }
 
   def usage = println("matrixGen <num rows> <num cols> <num colf> <output dir>")
