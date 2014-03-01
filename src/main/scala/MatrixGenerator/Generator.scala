@@ -24,6 +24,7 @@ object Generator extends Configured with Tool {
   private val NUM_ROWS = "mapreduce.matrixgenerator.num-rows"
   private val NUM_COLS = "mapreduce.matrixgenerator.num-cols"
   private val NUM_COLF = "mapreduce.matrixgenerator.num-colF"
+  private val BASE_OUTPUT_NAME = "mapreduce.output.basename"
 
   def setNumRows(job : Job, rows : Int) {
     job.getConfiguration.setInt(NUM_ROWS, rows)
@@ -41,7 +42,7 @@ object Generator extends Configured with Tool {
   def getNumCols(job : JobContext) = job.getConfiguration.getInt(NUM_COLS, 10)
   def getNumColF(job : JobContext) = job.getConfiguration.getInt(NUM_COLF, 10)
 
-  class GenMapper extends Mapper[IntWritable, NullWritable, Object, Writable] {
+  class GenMapper extends Mapper[IntWritable, NullWritable, NullWritable, Writable] {
     val serde = new OrcSerde()
     val rand = new Random()
     var oip : ObjectInspector = null
@@ -49,7 +50,7 @@ object Generator extends Configured with Tool {
     var numRows : Int = 0
     var numCols : Int = 0
     var output : MultipleOutputs[Object, Writable] = null
-    type Context = Mapper[IntWritable, NullWritable, Object, Writable]#Context
+    type Context = Mapper[IntWritable, NullWritable, NullWritable, Writable]#Context
 
     override def setup(context : Context) {
       numColF = Generator.getNumColF(context)
@@ -68,8 +69,7 @@ object Generator extends Configured with Tool {
           data.add(d)
         }
         val row = serde.serialize(data, oip)
-        output.write("cf"+i, null, row)
-
+        output.write("cf"+i, NullWritable.get(), row)
       }
     }
   }
@@ -98,8 +98,8 @@ object Generator extends Configured with Tool {
     job.setJarByClass(this.getClass)
     job.setMapperClass(classOf[GenMapper])
     job.setNumReduceTasks(0)
-//    job.setOutputKeyClass(classOf[NullWritable])
-//    job.setOutputValueClass(classOf[Writable])
+    job.setOutputKeyClass(classOf[NullWritable])
+    job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
     for (i <- 1 to Generator.getNumColF(job)) {
       MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
