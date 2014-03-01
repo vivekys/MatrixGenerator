@@ -93,7 +93,7 @@ object Generator extends Configured with Tool {
       throw new IOException("Output dir " + outputDir + " already exists")
     }
     FileOutputFormat.setOutputPath(job, outputDir)
-//    job.setOutputFormatClass(classOf[OrcNewOutputFormat])
+    job.setOutputFormatClass(classOf[OrcNewOutputFormat])
     job.setJarByClass(this.getClass)
     job.setMapperClass(classOf[GenMapper])
     job.setNumReduceTasks(0)
