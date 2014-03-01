@@ -24,6 +24,7 @@ object Generator extends Configured with Tool {
   private val NUM_ROWS = "mapreduce.matrixgenerator.num-rows"
   private val NUM_COLS = "mapreduce.matrixgenerator.num-cols"
   private val NUM_COLF = "mapreduce.matrixgenerator.num-colF"
+  private val NUM_ROWF = "mapreduce.matrixgenerator.num-colF"
 
   def setNumRows(job : Job, rows : Int) {
     job.getConfiguration.setInt(NUM_ROWS, rows)
@@ -37,9 +38,14 @@ object Generator extends Configured with Tool {
     job.getConfiguration.setInt(NUM_COLF, colF)
   }
 
+  def setNumRowF(job : Job, rowF : Int) {
+    job.getConfiguration.setInt(NUM_ROWF, rowF)
+  }
+
   def getNumRows(job : JobContext) = job.getConfiguration.getInt(NUM_ROWS, 10)
   def getNumCols(job : JobContext) = job.getConfiguration.getInt(NUM_COLS, 10)
   def getNumColF(job : JobContext) = job.getConfiguration.getInt(NUM_COLF, 10)
+  def getNumRowF(job : JobContext) = job.getConfiguration.getInt(NUM_ROWF, 10)
 
   class GenMapper extends Mapper[IntWritable, NullWritable, NullWritable, Writable] {
     val serde = new OrcSerde()
@@ -77,21 +83,22 @@ object Generator extends Configured with Tool {
     }
   }
 
-  def usage = println("matrixGen <num rows> <num cols> <num colf> <output dir>")
+  def usage = println("matrixGen <num rows> <num cols> <num rowf> <num colf> <output dir>")
 
   //Initalize the MapReduce
   def run(args: Array[String]): Int = {
     val conf = getConf
     conf.set("mapred.job.map.memory.mb", "6144")
     val job = new Job(conf, "RandomMatrix Generator")
-    if (args.length != 4) {
+    if (args.length != 5) {
       usage
       return 2
     }
     setNumRows(job, args(0).toInt)
     setNumCols(job, args(1).toInt)
-    setNumColF(job, args(2).toInt)
-    val outputDir = new Path(args(3))
+    setNumRowF(job, args(2).toInt)
+    setNumColF(job, args(3).toInt)
+    val outputDir = new Path(args(4))
 
     if (outputDir.getFileSystem(getConf).exists(outputDir)) {
       throw new IOException("Output dir " + outputDir + " already exists")
@@ -119,7 +126,8 @@ object Generator extends Configured with Tool {
 class RangeInputFormat extends InputFormat[IntWritable, NullWritable] {
   override def getSplits(job: JobContext): util.List[InputSplit] = {
     val totalRows = Generator.getNumRows(job)
-    val numSplits = 120
+    val numSplits = Generator.getNumRowF(job)
+
     val splits = new util.ArrayList[InputSplit]()
     val splitList = 1 to totalRows by numSplits
     for (split <- splitList) {
