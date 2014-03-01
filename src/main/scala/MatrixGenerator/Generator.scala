@@ -69,6 +69,7 @@ object Generator extends Configured with Tool {
         }
         val row = serde.serialize(data, oip)
         output.write("cf"+i, null, row)
+
       }
     }
   }
@@ -93,12 +94,12 @@ object Generator extends Configured with Tool {
       throw new IOException("Output dir " + outputDir + " already exists")
     }
     FileOutputFormat.setOutputPath(job, outputDir)
-    job.setOutputFormatClass(classOf[OrcNewOutputFormat])
+//    job.setOutputFormatClass(classOf[OrcNewOutputFormat])
     job.setJarByClass(this.getClass)
     job.setMapperClass(classOf[GenMapper])
     job.setNumReduceTasks(0)
-    job.setOutputKeyClass(classOf[NullWritable])
-    job.setOutputValueClass(classOf[Writable])
+//    job.setOutputKeyClass(classOf[NullWritable])
+//    job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
     for (i <- 1 to Generator.getNumColF(job)) {
       MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
