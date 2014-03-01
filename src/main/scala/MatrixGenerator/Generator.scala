@@ -101,7 +101,7 @@ object Generator extends Configured with Tool {
     job.setOutputValueClass(classOf[Writable])
     job.setInputFormatClass(classOf[RangeInputFormat])
     for (i <- 1 to Generator.getNumColF(job)) {
-      MultipleOutputs.addNamedOutput(job, "cf-"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
+      MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[OrcNewOutputFormat], classOf[NullWritable], classOf[Writable])
     }
 
     return if (job.waitForCompletion(true)) 0 else 1
