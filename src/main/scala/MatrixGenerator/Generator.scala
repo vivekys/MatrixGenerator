@@ -127,7 +127,7 @@ class RangeInputFormat extends InputFormat[IntWritable, NullWritable] {
                       split + numSplits
                    else
                       totalRows
-      splits.add(new RangeInputSplit(split, endRow))
+      splits.add(new RangeInputSplit(split, endRow-split))
     }
     splits
   }
