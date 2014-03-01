@@ -70,8 +70,8 @@ object Generator extends Configured with Tool {
       for (i <- 1 to numColF) {
         val data = new util.ArrayList[Int](numCols)
         for (j <- 1 to numCols) {
-//          val d = rand.nextInt()
-          val d = (key.get().toString + (i * numColF + j).toString).toInt
+          val d = rand.nextInt()
+//          val d = (key.get().toString + ((i - 1) * numColF + j).toString).toInt
           data.add(d)
         }
         val row = serde.serialize(data, oip)
