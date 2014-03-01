@@ -62,10 +62,10 @@ object Generator extends Configured with Tool {
 
     override def map(key : IntWritable, value : NullWritable, context : Context) {
       for (i <- 1 to numColF) {
-        val data = new util.ArrayList[String](numCols)
+        val data = new util.ArrayList[Int](numCols)
         for (j <- 1 to numCols) {
           val d = rand.nextInt()
-          data.add(d.toString)
+          data.add(d)
         }
         val row = serde.serialize(data, oip)
         output.write("cf"+i, null, row)
@@ -196,7 +196,7 @@ object SchemaGenerator {
   def schemaGen (numCols : Int) : TypeInfo = {
     val colNames = new util.ArrayList[String](numCols)
     val colTypes = new util.ArrayList[TypeInfo](numCols)
-    val intType = TypeInfoFactory.getPrimitiveTypeInfoFromJavaPrimitive(classOf[Integer])
+    val intType = TypeInfoFactory.getPrimitiveTypeInfo("int")
     val prefix = "c-"
     for (i <- 1 to numCols) {
       val colName = prefix + i
