@@ -68,7 +68,7 @@ object Generator extends Configured with Tool {
           data.add(d.toString)
         }
         val row = serde.serialize(data, oip)
-        output.write("cf-"+i, null, row)
+        output.write("cf"+i, null, row)
       }
     }
   }
