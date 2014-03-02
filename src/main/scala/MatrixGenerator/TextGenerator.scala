@@ -59,7 +59,6 @@ object TextGenerator extends Configured with Tool {
     val rowKey = new Text()
     val dataStr = new StringBuilder
     val rowKeyStr = new StringBuilder
-    val TAB = "\t".toByte
 
     override def setup(context : Context) {
       numColF = TextGenerator.getNumColF(context)
