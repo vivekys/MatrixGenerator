@@ -117,18 +117,18 @@ object TextGenerator extends Configured with Tool {
       throw new IOException("Output dir " + outputDir + " already exists")
     }
     FileOutputFormat.setOutputPath(job, outputDir)
-    //    job.setOutputFormatClass(classOf[OrcNewOutputFormat])
+    //job.setOutputFormatClass(classOf[OrcNewOutputFormat])
     job.setJarByClass(this.getClass)
     job.setMapperClass(classOf[GenMapper])
     job.setNumReduceTasks(0)
-    job.setOutputKeyClass(classOf[NullWritable])
-    job.setOutputValueClass(classOf[Writable])
+    job.setOutputKeyClass(classOf[Text])
+    job.setOutputValueClass(classOf[Text])
     job.setInputFormatClass(classOf[RangeInputFormat])
 
     for (i <- 1 to TextGenerator.getNumColF(job)) {
-      MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[TextOutputFormat], classOf[Text], classOf[Text])
+      MultipleOutputs.addNamedOutput(job, "cf"+i, classOf[TextOutputFormat[Text, Text]], classOf[Text], classOf[Text])
     }
-    LazyOutputFormat.setOutputFormatClass(job, classOf[TextOutputFormat])
+    LazyOutputFormat.setOutputFormatClass(job, classOf[TextOutputFormat[Text, Text]])
     return if (job.waitForCompletion(true)) 0 else 1
   }
 
