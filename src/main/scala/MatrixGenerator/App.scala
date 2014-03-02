@@ -14,7 +14,7 @@ object App {
       MatrixDump.dump(args.drop(1))
     }
     else {
-      val result = ToolRunner.run(new Configuration(), Generator, args)
+      val result = ToolRunner.run(new Configuration(), ORCGenerator, args)
       System.exit(result)
     }
   }
