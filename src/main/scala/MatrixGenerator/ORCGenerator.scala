@@ -5,7 +5,8 @@ import org.apache.hadoop.util.Tool
 import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.io._
 import java.util
-import java.io.{IOException, DataOutput, DataInput}
+import scala.collection.JavaConverters._
+import java.io.{IOException}
 import org.apache.hadoop.hive.serde2.typeinfo.{TypeInfoUtils, TypeInfo, TypeInfoFactory}
 import org.apache.hadoop.hive.ql.io.orc.{OrcNewOutputFormat, OrcSerde}
 import scala.util.Random
@@ -75,7 +76,7 @@ object ORCGenerator extends Configured with Tool {
 //          val d = (key.get().toString + ((i - 1) * numColF + j).toString).toInt
           data(j) = rand.nextInt()
         }
-        output.write("cf"+i, NullWritable.get(), serde.serialize(data, oip))
+        output.write("cf"+i, NullWritable.get(), serde.serialize(data.asJava, oip))
       }
     }
 
