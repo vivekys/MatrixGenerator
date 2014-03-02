@@ -65,7 +65,7 @@ object ORCGenerator extends Configured with Tool {
       numRows = ORCGenerator.getNumRows(context)
       oip = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(ORCSchemaGenerator.schemaGen(numCols))
       output = new MultipleOutputs[NullWritable, Writable](context)
-      data = new ArrayBuffer[Int](numCols)
+      data = ArrayBuffer.fill(numCols)(0)
     }
 
 
