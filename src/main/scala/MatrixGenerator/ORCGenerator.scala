@@ -5,7 +5,6 @@ import org.apache.hadoop.util.Tool
 import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.io._
 import java.util
-import scala.collection.JavaConverters._
 import java.io.{IOException}
 import org.apache.hadoop.hive.serde2.typeinfo.{TypeInfoUtils, TypeInfo, TypeInfoFactory}
 import org.apache.hadoop.hive.ql.io.orc.{OrcNewOutputFormat, OrcSerde}
@@ -57,7 +56,7 @@ object ORCGenerator extends Configured with Tool {
     var numRows : Int = 0
     var numCols : Int = 0
     var output : MultipleOutputs[NullWritable, Writable] = null
-    var data : ArrayBuffer[Int] = null
+    var data : Array[Int] = null
     type Context = Mapper[IntWritable, NullWritable, NullWritable, Writable]#Context
 
     override def setup(context : Context) {
@@ -66,7 +65,7 @@ object ORCGenerator extends Configured with Tool {
       numRows = ORCGenerator.getNumRows(context)
       oip = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(ORCSchemaGenerator.schemaGen(numCols))
       output = new MultipleOutputs[NullWritable, Writable](context)
-      data = ArrayBuffer.fill(numCols)(0)
+      data = new Array[Int](numColF)
     }
 
 
@@ -76,7 +75,7 @@ object ORCGenerator extends Configured with Tool {
 //          val d = (key.get().toString + ((i - 1) * numColF + j).toString).toInt
           data(j) = rand.nextInt()
         }
-        output.write("cf"+i, NullWritable.get(), serde.serialize(data.asJava, oip))
+        output.write("cf"+i, NullWritable.get(), serde.serialize(data, oip))
       }
     }
 

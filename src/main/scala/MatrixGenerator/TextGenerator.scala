@@ -81,6 +81,7 @@ object TextGenerator extends Configured with Tool {
           else
             dataStr.append(d)
         }
+
         rowKeyStr.append(key.get()).append("-").append(((i-1)*numCols)+1)
 
         rowKey.append(rowKeyStr.toString().getBytes("utf-8"), 0, rowKeyStr.toString().length)
